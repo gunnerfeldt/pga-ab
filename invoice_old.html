@@ -1,0 +1,869 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="css/main.css"/>
+    <link rel="stylesheet" type="text/css" href="css/invoice.css"/>
+    <link rel="stylesheet" href="css/jquery-ui.css" />
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+    <script src="js/vendor/jquery.ui.widget.js"></script>
+    <script src="js/jquery.formatCurrency-1.4.0.js"></script>
+    <script src="js/jquery.formatCurrency.sv-SE.js"></script>
+    <title>Invoice</title>
+</head>
+<body>
+
+
+
+             <div  class="Main" id="InvoiceWrap">
+                <div class="InnerWrap"  id="invoicelist">
+                    <div class="UpperHeader"> 
+                       Skickade Fakturor
+                    </div>
+ 
+                    <div class="formDiv5">  
+                        <div class="cheader">
+                            Nr
+                        </div>                  
+                        <ol>
+                        </ol>
+                    </div> 
+ 
+                    <div class="formDiv6">  
+                        <div class="cheader">
+                            Datum
+                        </div>                  
+                        <ol>
+                        </ol>
+                    </div> 
+ 
+                    <div class="formDiv3">  
+                        <div class="cheader">
+                            Kund
+                        </div>                  
+                        <ol>
+                        </ol>
+                    </div> 
+ 
+                    <div class="formDiv7">  
+                        <div class="cheader">
+                            Belopp
+                        </div>                  
+                        <ol class="currency">
+                        </ol>
+                    </div>   
+ 
+                    <div class="formDiv8" id="payed">  
+                        <div class="cheader">
+                            Bet.
+                        </div>                  
+                        <ol class="img">
+                        </ol>
+                    </div>   
+ 
+                    <div class="formDiv8" id="due">  
+                        <div class="cheader">
+                            Förf.
+                        </div>                  
+                        <ol class="img">
+                        </ol>
+                    </div>
+                    
+                        
+                    <div class="formDiv7" id="import">  
+                        <div class="cheader">
+                            Kopiera
+                        </div>                  
+                        <ol class="img">
+                        </ol>
+                    </div>
+                    
+                    <div class="formDivLine" id="lastline">  
+                    </div>   
+                    
+                    <div class="Footer" id="invoicefooter">
+                        <div class="butt" id="newinvoice">
+                            skapa ny
+                        </div>
+                    </div>
+               
+
+                </div>
+             </div>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        
+        $('#newinvoice').click(function(e)
+            {
+                 
+                var date = $.datepicker.formatDate('yy-mm-dd', new Date);
+                var credit = 30;
+                var ymd = date.split("-");
+                var joindate = new Date(
+                    parseInt(ymd[0], 10),
+                    parseInt(ymd[1], 10)-1,
+                    parseInt(ymd[2], 10)+credit
+                );
+            
+                $('#dateinput').val(date);
+                $('#creditinput').val(credit);
+                $('#duedateinput').val($.datepicker.formatDate('yy-mm-dd', joindate));
+                
+                var newInvoiceID=0;
+                
+                $.ajax({
+                    url:"invoiceajax.php",
+                    data: "input=getid.0",
+                    success:function(msg){
+                        newInvoiceID = JSON.parse(msg);
+                        $('#InvoiceHeader').html("Ny Faktura #"+newInvoiceID);
+                    }
+                }); 
+                
+                
+                $('#admininput').val("");
+                $('#contactinput').val("");
+                $('#clientname').val("");
+                $('#clientadd1').val("");
+                $('#clientadd2').val("");
+                $('#clientcountry').val("");
+                
+                $('#itemlist').empty(); 
+                $('#commentlist').empty();
+                $('#unitslist').empty();
+                $('#pricelist').empty();
+                $('#vatlist').empty();
+
+                
+                var price = "";
+                var vat = "25%";
+                
+                var label = '<li id="label1">Artikel</li>';
+
+                var item = '<li id="item1" value="1"><select name="itemID1" id="itemID1" class="itemsel"></select></li>';
+
+                var comment = '<li id="comment1"><input type="text" name="commentID1" id="commentID1" value=""></input></li>';
+
+                var units = '<li id="units1"><input type="text" name="unitsID1" id="unitsID1" value="1"></input></li>';
+
+                var price = '<li id="price1"><input type="text" name="priceID1" id="priceID1" class="priceclass" value="'+price+'"></input></li>';
+
+                var vat = '<li id="vat1"><input type="text" name="vatID1" id="vatID1" value="'+vat+'"></input></li>';
+
+                $('#labellist').append(label);  
+                $('#itemlist').append(item);  
+                $('#commentlist').append(comment);
+                $('#unitslist').append(units);
+                $('#pricelist').append(price);
+                $('#vatlist').append(vat);
+                $('#priceID1').formatCurrency({ region: 'sv-SE' });
+                
+
+                $.ajax({
+                    url:"invoiceajax.php",
+                    data: "input=getitems.0",
+                    success:function(msg){
+                    myitems = new Array();
+                        myitems = JSON.parse(msg);
+                        $.each(myitems, function (i, item) {
+                            $('#itemID1')
+                                .append($("<option></option>")
+                                .attr("value",item.ID)
+                                .text(item.Desc));
+                        });
+                    }
+                }); 
+
+
+                var oldclass=$('#import').attr('class');
+                $('#import').removeClass(oldclass);
+                $('#import').addClass('formDiv7');
+
+                oldclass=$('#showpdf').attr('class');
+                $('#showpdf').removeClass(oldclass);
+                $('#showpdf').addClass('noshow');
+                $('#showpdfeng').removeClass(oldclass);
+                $('#showpdfeng').addClass('noshow');
+
+                oldclass=$('#additem').attr('class');
+                $('#additem').removeClass(oldclass);
+                $('#additem').addClass('butt');
+                
+                oldclass=$('#ok').attr('class');
+                $('#ok').removeClass(oldclass);
+                $('#ok').addClass('butt');
+                
+                oldclass=$('#idagbutt').attr('class');
+                $('#idagbutt').removeClass(oldclass);
+                $('#idagbutt').addClass('butt');
+                
+                oldclass=$('#credbutt').attr('class');
+                $('#credbutt').removeClass(oldclass);
+                $('#credbutt').addClass('butt');
+                
+                oldclass=$('#reminderbutt').attr('class');
+                $('#reminderbutt').removeClass(oldclass);
+                $('#reminderbutt').addClass('noshow');
+
+
+
+                $("input").each(function() {
+
+                    $(this).prop('disabled', false);
+
+                });
+                
+                $("select").each(function() {
+
+                    $(this).prop('disabled', false);
+
+                });
+            }
+         );
+             
+        $('#invoicelist li').click(function(e)
+        {
+            var copy="";
+            var locked=false;
+
+            
+            
+            if($(this).attr('class')=="importlistitem")
+                {
+                    copy=($(this).val())         
+                }
+            else
+                {
+                    var oldclass=$('#import').attr('class');
+                    $('#import').removeClass(oldclass);
+                    $('#import').addClass('noshow');
+                    
+                    oldclass=$('#showpdf').attr('class');
+                    $('#showpdf').removeClass(oldclass);
+                    $('#showpdf').addClass('butt');
+                    $('#showpdfeng').removeClass(oldclass);
+                    $('#showpdfeng').addClass('butt');
+                    
+                    oldclass=$('#additem').attr('class');
+                    $('#additem').removeClass(oldclass);
+                    $('#additem').addClass('noshow');
+                    
+                    oldclass=$('#ok').attr('class');
+                    $('#ok').removeClass(oldclass);
+                    $('#ok').addClass('noshow');
+                
+                    oldclass=$('#idagbutt').attr('class');
+                    $('#idagbutt').removeClass(oldclass);
+                    $('#idagbutt').addClass('noshow');
+
+                    oldclass=$('#credbutt').attr('class');
+                    $('#credbutt').removeClass(oldclass);
+                    $('#credbutt').addClass('noshow');
+ 
+                    oldclass=$('#reminderbutt').attr('class');
+                    $('#reminderbutt').removeClass(oldclass);
+                    $('#reminderbutt').addClass('butt');                   
+                    locked=true;
+                    
+                }
+
+        //    $('#ladda').val($(this).val());
+        //    $('#submit').click();
+        
+            myitems = new Array();
+            
+            $.ajax({
+                url:"invoiceajax.php",
+                data: "input=getitems.0",
+                success:function(msg){
+                    myitems = JSON.parse(msg);
+                }
+            }); 
+        
+        // ladda in sålda artiklar som matchar fakturanumret
+        
+            invoice = new Array();
+            $.ajax({
+                url:"invoiceajax.php",
+                data: "input=invoicechange."+$(this).val(),
+                success:function(msg)
+                {
+                    invoice = JSON.parse(msg);
+                    if(copy=="")
+                    {
+                        $('#InvoiceHeader').html("Faktura #"+invoice.ID+" - "+invoice.Client);
+                        $('#dateinput').val(invoice.Date);
+                        $('#duedateinput').val(invoice.DueDate);                           
+                    }
+                    else
+                    {
+                        var date = $('#dateinput').val();
+                        var credit = parseInt($('#creditinput').val());
+                        var ymd = date.split("-");
+                        var joindate = new Date(
+                            parseInt(ymd[0], 10),
+                            parseInt(ymd[1], 10)-1,
+                            parseInt(ymd[2], 10)+credit
+                        );
+                        var outdate=$.datepicker.formatDate('yy-mm-dd', joindate);
+
+                        $('#duedateinput').val(outdate);
+                    }
+
+                    $('#creditinput').val(invoice.Credit);
+                    $('#admininput').val(invoice.Admin);
+                    $('#contactinput').val(invoice.ClientContact);
+                    $('#clientname').val(invoice.Client);
+                    $('#clientadd1').val(invoice.Address1);
+                    $('#clientadd2').val(invoice.Address2);
+                    $('#clientcountry').val(invoice.Country);
+                    
+                    $('#itemlist').empty();
+                    $('#labellist').empty();
+                    $('#itemlist').empty(); 
+                    $('#commentlist').empty();
+                    $('#unitslist').empty();
+                    $('#pricelist').empty();
+                    $('#vatlist').empty();
+                    
+                    var lastinput = '#itemID'+cnt;
+                    
+                    var cnt;
+                    var enabled="";
+                    if(locked){
+                        enabled=" disabled=true";
+                    }
+                    
+                    for (cnt = 1; cnt < invoice.items.length+1; ++cnt) {
+                        // do something with `substr[i]`
+                        var price = invoice.items[cnt-1].price;
+                        var vat = invoice.items[cnt-1].vat;
+                        
+                        var label = '<li id="label'+cnt+'">Artikel</li>';
+
+                        var item = '<li id="item'+cnt+'" value="'+cnt+'"><select name="itemID'
+                                +cnt+'" id="itemID'+cnt+'" class="itemsel"'+enabled+'></select></li>';
+
+                        var comment = '<li id="comment'+cnt+'"><input type="text" name="commentID'
+                                +cnt+'" id="commentID'+cnt+'" value="'+invoice.items[cnt-1].comment+'"'+enabled+'></input></li>';
+
+                        var units = '<li id="units'+cnt+'"><input type="text" name="unitsID'
+                                +cnt+'" id="unitsID'+cnt+'" value="'+invoice.items[cnt-1].units+'"'+enabled+'></input></li>';
+
+                        var price = '<li id="price'+cnt+'"><input type="text" name="priceID'
+                                +cnt+'" id="priceID'+cnt+'" class="priceclass" value="'+price+'"'+enabled+'></input></li>';
+
+                        var vat = '<li id="vat'+cnt+'"><input type="text" name="vatID'
+                                +cnt+'" id="vatID'+cnt+'" value="'+vat+'"'+enabled+'></input></li>';
+
+                        var newselect='#itemID'+cnt;
+                      //  var $options = $("#itemID1 > option").clone();
+
+
+                        $('#labellist').append(label);  
+                        $('#itemlist').append(item);  
+                        $('#commentlist').append(comment);
+                        $('#unitslist').append(units);
+                        $('#pricelist').append(price);
+                        $('#vatlist').append(vat);
+                        
+                        $('#priceID'+cnt).formatCurrency({ region: 'sv-SE' });
+
+                        
+                        $.each(myitems, function (i, item) {
+
+                            // checka vald artikel och select:a option
+
+                            var sel = invoice.items[cnt-1].ID==item.ID;
+
+                            $(newselect)
+                                .append($("<option></option>")
+                                .attr("value",item.ID)
+                                .text(item.Desc)
+                                .attr('selected',sel));
+                        
+
+                                
+                        });
+                    }
+                }
+            });
+            
+            if(locked)
+            {
+                $("input").each(function() {
+
+                    $(this).prop('disabled', true);
+
+                });
+                
+                $("select").each(function() {
+
+                    $(this).prop('disabled', true);
+
+                });
+            }
+            
+        });
+        
+        $('#invoicelist li').mouseover(
+            function()
+            {
+                var fadeclass=".invoicerow"+$(this).val();   
+                $(fadeclass).fadeOut(100);$(fadeclass).fadeIn(400);
+                //$(this).fadeOut(100);$(this).fadeIn(100);
+                
+            }
+         );
+        
+
+        
+    });
+    
+</script>
+        <form action="/accounting/invoice.php" method="post" id="invoiceform">
+            <input type="hidden" name="ladda" value="" id="ladda"/>
+             <div  class="Main" id="InvoiceWrap">
+                <div class="InnerWrap" id="StoreItemsWrap">
+                    <div class="UpperHeader" id="InvoiceHeader"> 
+                       Ny Faktura #1
+                    </div>
+ 
+                    <div class="formDiv2">  
+                        <div class="cheader">
+                            Fakturadatum
+                        </div>                  
+                        <ol>
+                            <li>
+                                <input type="text" name="dateinput" id="dateinput" value="2017-01-29">
+                                </input>
+                            </li>
+                            <li class="topdiv">
+                                <div class="butt" id="idagbutt">
+                                    idag
+                                </div>
+                            </li>
+                        </ol>
+                    </div> 
+                     
+                    <div class="formDiv1">  
+                        <div class="cheader">
+                            Villkor
+                        </div>                  
+                        <ol>
+                            <li>
+                                <input type="text" name="creditinput" id="creditinput" value=30>
+                                </input>
+                            </li>
+                            <li class="topdiv">
+                                <div class="butt" id="credbutt">
+                                    30
+                                </div>
+                            </li>
+                        </ol>
+                    </div> 
+                    
+                    <div class="formDiv2">  
+                        <div class="cheader">
+                            Förfallodatum
+                        </div>                  
+                        <ol>
+                            <li>
+                                <input type="text" name="duedateinput" id="duedateinput" value="2017-02-28">
+                                </input>
+                            </li>
+                            <li class="topdiv">
+                                <div class="noshow" id="reminderbutt">
+                                    påminnelse
+                                </div>
+                            </li>
+                        </ol>
+                    </div> 
+                    
+                    <div class="formDiv4">  
+                        <div class="cheader">
+                        </div>       
+                    </div>
+                    
+                    <div class="formDiv2">  
+                        <div class="cheader">
+                            Vår kontakt
+                        </div>                  
+                        <ol>
+                            <li>
+                                <select name="adminselect" id="adminselect">
+                                    <option></option>
+                                </select>
+                            </li>
+                            <li>
+                                <input type="text" name="admininput" id="admininput" value="">
+                                </input>
+                            </li>
+                        </ol>
+                    </div>    
+                    
+                    <div class="formDiv1">  
+                        <div class="cheader">
+                        </div>       
+                    </div>                    
+
+
+                    <div class="formDivLine">  
+                        
+                    </div>
+
+
+
+                    <div class="formDiv2">  
+                        <div class="cheader">
+                            Köpare
+                        </div>                  
+                        <ol>
+                            <li>
+                                <select name="clientselect" id="clientselect">
+                                    <option></option>
+                                </select>
+                            </li>
+                        </ol>
+                    </div> 
+                    
+                    <div class="formDiv1" id="clientwrap">  
+                        <div class="cheader">
+                        </div>                  
+                        <ol id="label">
+                            <li>
+                                Företag
+                            </li>
+                            <li>
+                                Adress
+                            </li>
+                            <li>
+                                Adress
+                            </li>
+                            <li>
+                                Land
+                            </li>
+                        </ol>
+                    </div> 
+                    
+                    <div class="formDiv3">  
+                        <div class="cheader">
+                        </div>                  
+                        <ol>
+                            <li>
+                                <input type="text" name="clientname" id="clientname" value="">
+                                </input>
+                            </li>
+                            <li>
+                                <input type="text" name="clientaddress1" id="clientadd1" value="">
+                                </input>
+                            </li>
+                            <li>
+                                <input type="text" name="clientaddress2" id="clientadd2" value="">
+                                </input>
+                            </li>
+                            <li>
+                                <input type="text" name="clientcountry" id="clientcountry" value="">
+                                </input>
+                            </li>
+                        </ol>
+                    </div>  
+                    
+                    <div class="formDiv2">  
+                        <div class="cheader">
+                            Köparens kontakt
+                        </div>                  
+                        <ol>
+                            <li>
+                                <select name="contactselect" id="contactselect">
+                                    <option></option>
+                                
+                                </select>
+                            </li>
+                            <li>
+                                <input type="text" name="contactinput" id="contactinput"  value="">
+                                </input>
+                            </li>
+                        </ol>
+                    </div>               
+
+
+                    <div class="formDiv1"> 
+                        <div class="cheader">
+                        </div>    
+                    </div>
+                    
+                    <div class="formDivLine">  
+                        
+                    </div>
+
+                    
+                        <div class="formDiv2">  
+                            <div class="cheader">
+                                Artikel
+                            </div>                  
+                            <ol id="itemlist">
+                            
+                                <li id="item1" value="1">
+                                    <select name="itemID1" id="itemID1" class="itemsel">
+                                        <option></option>
+                                    </select>
+                                </li>
+                                
+                            </ol>
+                        </div>
+
+                        <div class="formDiv3">  
+                            <div class="cheader">
+                                Specifikation
+                            </div>                  
+                            <ol id="commentlist">
+                            
+                                <li id="comment1">
+                                    <input type="text" name="commentID1" id="commentID1" value="">
+                                    </input>
+                                </li>
+                                
+                            </ol>
+                        </div>
+
+                        <div class="formDiv1">  
+                            <div class="cheader">
+                                Antal
+                            </div>                  
+                            <ol id="unitslist">
+                            
+                                <li id="units1">
+                                    <input type="text" name="unitsID1" id="unitsID1" value="1">
+                                    </input>
+                                </li>
+                                
+                            </ol>
+                        </div>
+
+                        <div class="formDiv2">  
+                            <div class="cheader">
+                                A pris
+                            </div>                  
+                            <ol id="pricelist">
+                            
+                                <li id="price1">
+                                    <input type="text" name="priceID1" id="priceID1" class="priceclass" value="">
+                                    </input>
+                                </li>
+                                
+                            </ol>
+                        </div>
+
+                        <div class="formDiv1">  
+                            <div class="cheader">
+                                Moms
+                            </div>                  
+                            <ol id="vatlist">
+                            
+                                <li id="vat1">
+                                    <input type="text" name="vatID1" id="vatID1" value="25%">
+                                    </input>
+                                </li>
+                                
+                            </ol>
+                        </div>
+ 
+                        <div class="formDivLine" id="lastline">  
+                            <div class="butt" id="additem">lägg till artikel
+                            </div>
+                        </div>
+                        
+                </div>
+                <div class="Footer" id="invoicefooter">
+                    <button type="submit" name="submit" value="submit" id="submit">Add</button>
+                    <div class="noshow" id="showpdf">
+                        Sve PDF
+                    </div>
+                    <div class="noshow" id="showpdfeng">
+                        Eng PDF
+                    </div>
+                    <div class="butt" id="ok">
+                        OK
+                    </div>
+                </div>
+             </div>
+        </form>
+    </body>
+    
+
+    
+    
+<script type="text/javascript">
+
+    $(document).ready(function() {
+        
+        $('#additem').click(function(e)
+        {
+            var cnt=($('#itemlist').children().length);
+            var lastinput = '#itemID'+cnt;
+            if($(lastinput).val()!="")
+                {
+                    cnt++;
+                    
+                    var label = '<li id="label'+cnt+'">Artikel</li>';
+                    
+                    var item = '<li id="item'+cnt+'" value="'+cnt+'"><select name="itemID'
+                            +cnt+'" id="itemID'+cnt+'" class="itemsel"></select></li>';
+                    
+                    var comment = '<li id="comment'+cnt+'"><input type="text" name="commentID'
+                            +cnt+'" id="commentID'+cnt+'" value=""></input></li>';
+                    
+                    var units = '<li id="units'+cnt+'"><input type="text" name="unitsID'
+                            +cnt+'" id="unitsID'+cnt+'" value="1"></input></li>';
+                    
+                    var price = '<li id="price'+cnt+'"><input type="text" name="priceID'
+                            +cnt+'" id="priceID'+cnt+'" class="priceclass" value=""></input></li>';
+                    
+                    var vat = '<li id="vat'+cnt+'"><input type="text" name="vatID'
+                            +cnt+'" id="vatID'+cnt+'" value=""></input></li>';
+                    
+                    var newselect='#itemID'+cnt;
+                    var $options = $("#itemID1 > option").clone();
+
+                    
+                    $('#labellist').append(label);  
+                    $('#itemlist').append(item);  
+                    $('#commentlist').append(comment);
+                    $('#unitslist').append(units);
+                    $('#pricelist').append(price);
+                    $('#vatlist').append(vat);
+                    
+                    $(newselect).append($options); 
+                }
+
+        });
+        
+        $('#itemlist').on( 'change', '.itemsel', function(e)
+        {
+            item = new Array();
+            var ID=$(this).val();
+            var listID=$(this).closest('li').val();
+            $.ajax({
+                url:"invoiceajax.php",
+                data: "input=itemchange."+ID,
+                success:function(msg){
+                    item = JSON.parse(msg);
+                    var price = "#priceID"+listID;
+                    var vat = "#vatID"+listID;
+                    $(price).val(item.price);
+                    $(vat).val(item.vat+'%');
+                }
+            });           
+        });
+        
+        $('#contactselect').change(function(e)
+        {
+            $('#contactinput').val($(this).val());
+        });
+        
+        $('#adminselect').change(function(e)
+        {
+            $('#admininput').val($(this).val());
+        });
+        
+        
+        $('#clientselect').change(function(e)
+        {
+            client = new Array();
+            $.ajax({
+                url:"invoiceajax.php",
+                data: "input=clientchange."+$(this).val(),
+                success:function(msg){
+                    client = JSON.parse(msg);
+                    $('#clientname').val(client.Company);
+                    $('#clientadd1').val(client.Address1);
+                    $('#clientadd2').val(client.Address2);
+                    $('#clientcountry').val(client.Country);
+                }
+            });           
+        });
+        
+        $('#dateinput, #creditinput').change(function(e)
+        {
+            var date = $('#dateinput').val();
+            var credit = parseInt($('#creditinput').val());
+            var ymd = date.split("-");
+            var joindate = new Date(
+                parseInt(ymd[0], 10),
+                parseInt(ymd[1], 10)-1,
+                parseInt(ymd[2], 10)+credit
+            );
+            
+            var outdate=$.datepicker.formatDate('yy-mm-dd', joindate);
+            
+            $('#duedateinput').val(outdate);
+           
+        }); 
+        
+        
+        $('#idagbutt').click(function(e)
+        {
+            var date = $.datepicker.formatDate('yy-mm-dd', new Date);
+            var credit = parseInt($('#creditinput').val());
+            var ymd = date.split("-");
+            var joindate = new Date(
+                parseInt(ymd[0], 10),
+                parseInt(ymd[1], 10)-1,
+                parseInt(ymd[2], 10)+credit
+            );
+
+            $('#dateinput').val(date);
+            $('#duedateinput').val($.datepicker.formatDate('yy-mm-dd', joindate));
+           
+        });
+        
+                
+        $('#credbutt').click(function(e)
+        {
+            var date = $('#dateinput').val();
+            var credit = 30;
+            var ymd = date.split("-");
+            var joindate = new Date(
+                parseInt(ymd[0], 10),
+                parseInt(ymd[1], 10)-1,
+                parseInt(ymd[2], 10)+credit
+            );
+
+            $('#creditinput').val(credit);
+            $('#duedateinput').val($.datepicker.formatDate('yy-mm-dd', joindate));
+           
+        });
+
+        
+        $('#pricelist').on( 'change', '.priceclass', function(e)
+        {
+            $(this).formatCurrency({ region: 'sv-SE' });
+        });
+ 
+         
+        $('#showpdf').click(function(e)
+        {
+        //    $('#ladda').val('showpdf');
+        //    $('#submit').click();
+        window.open('http://grondahl.dyndns.org/grondahl/tcpdf/examples/pdf.php');
+        });  
+        
+        $('#showpdfeng').click(function(e)
+        {
+        //    $('#ladda').val('showpdf');
+        //    $('#submit').click();
+        window.open('http://grondahl.dyndns.org/grondahl/tcpdf/examples/pdfen.php');
+        });
+           
+        $('#ok').click(function(e)
+        {
+        //    $('#ladda').val('showpdf');
+            $('#submit').click();
+        });      
+
+        
+    });
+    
+</script>
