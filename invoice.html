@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Invoice</title>
+    <script src="invoice.js"></script>
+</head>
+<body>
+    <table>
+        <tr>
+            <td>Datum
+            </td>
+            <td>Kredit
+            </td>
+            <td>Förfallodatum
+            </td>
+            <td>Vår kontakt
+            </td>
+        </tr>
+        <tr>
+            <td><input id="date"></input>
+            </td>
+            <td><input id="credit"></input>
+            </td>
+            <td><input id="dueDate"></input>
+            </td>
+            <td><select id="ourRepList"></select>
+            </td>
+        </tr>
+            <td><button id="today">idag</button>
+            </td>
+            <td><button id="month">30</button>
+            </td>
+            <td>
+            </td>
+            <td><input id="buyersRep"></input>
+            </td>
+        <tr>
+        </tr>
+    </table>
+    <table>
+        <tr>
+            <td>Köpare
+            </td>
+            <td>
+            </td>
+            <td>
+            </td>
+            <td>Köparens kontakt
+            </td>
+        </tr>
+        <tr>
+            <td><select id="buyerList"></select>
+            </td>
+            <td>Företag
+            </td>
+            <td><input id="buyer"></input>
+            </td>
+            <td><select id="buyersRepList"></select>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+            <td>Adress
+            </td>
+            <td><input id="address1"></input>
+            </td>
+            <td><input id="buyersRep"></input>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            </td>
+            <td>Adress
+            </td>
+            <td><input id="address2"></input>
+            </td>
+            <td>
+            </td>
+        </tr>
+            <td>
+            </td>
+            <td>Land
+            </td>
+            <td><input id="address3"></input>
+            </td>
+            <td>
+            </td>
+        </tr>
+    </table>
+    <table border="0" cellspacing="0" cellpadding="0" class="articles">
+        <tr>
+            <td>Artikel
+            </td>
+            <td>Specifikation
+            </td>
+            <td>Antal
+            </td>
+            <td>A pris
+            </td>
+            <td>Moms
+            </td>
+        </tr>
+    </table>
+    <table border="0" cellspacing="0" cellpadding="0" id="articles" class="articles">
+    </table>
+    <script>
+        var invoiceForm = new InvoiceForm();
+        invoiceForm.bufferArticles([
+            "Mix", "Inspelning", "Tekniker", "Studio"
+        ]);
+        invoiceForm.setDate("20170202");
+        invoiceForm.addToOurRepList("Pelle Gunnerfeldt");
+        invoiceForm.addToOurRepList("Johan Gustafsson");
+
+        invoiceForm.setOurRepList([
+            "Suz","Erik","Hanna"
+        ]);
+        invoiceForm.setArticles([
+            {
+                id          : 0,
+                spec        : "Korvmojjen",
+                units       : 10,
+                price       : 5000,
+                vat         : 25
+            },
+            {
+                id          : 1,
+                spec        : "Grillbaren",
+                units       : 2,
+                price       : 1000,
+                vat         : 25
+            }
+        ])
+    </script>
+</body>
